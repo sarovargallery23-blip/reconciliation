@@ -1,0 +1,62 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. Load the data
+file_path = 'Sales Jan-26 - Copy.xlsx - Sales Jan-26.csv'
+df = pd.read_csv(file_path)
+
+# 2. SKU-wise Analysis (High selling SKUs and pricing)
+sku_analysis = df.groupby('SKU').agg({
+    'quantity': 'sum',
+    'invoiceamount': 'sum',
+    'seller_price': 'mean',
+    'article_type': 'first'
+}).reset_index()
+
+# Rename columns for clarity
+sku_analysis.rename(columns={
+    'quantity': 'Total Quantity Sold',
+    'invoiceamount': 'Total Revenue',
+    'seller_price': 'Average Selling Price'
+}, inplace=True)
+
+# Sort by Quantity Sold to identify high selling items
+sku_analysis = sku_analysis.sort_values(by='Total Quantity Sold', ascending=False)
+
+# Save the SKU analysis to CSV
+sku_analysis.to_csv('sku_sales_analysis.csv', index=False)
+
+# 3. Order ID wise Sales Analysis
+order_summary = df.groupby('order_id').agg({
+    'SKU': 'count',
+    'quantity': 'sum',
+    'invoiceamount': 'sum',
+    'order_status': 'first',
+    'customer_delivery_state_code': 'first'
+}).reset_index()
+
+order_summary.rename(columns={
+    'SKU': 'Number of SKUs',
+    'quantity': 'Total Items',
+    'invoiceamount': 'Total Order Value',
+    'customer_delivery_state_code': 'State'
+}, inplace=True)
+
+# Save Order ID summary to CSV
+order_summary.to_csv('order_id_wise_sales.csv', index=False)
+
+# 4. Graph Representation: Top 10 High Selling SKUs
+top_10_skus = sku_analysis.head(10)
+
+plt.figure(figsize=(12, 6))
+sns.barplot(data=top_10_skus, x='Total Quantity Sold', y='SKU', palette='viridis')
+plt.title('Top 10 High Selling SKUs by Quantity')
+plt.xlabel('Quantity Sold')
+plt.ylabel('SKU')
+plt.tight_layout()
+
+# Save the plot
+plt.savefig('top_selling_skus.png')
+
+print("Analysis complete. Files 'sku_sales_analysis.csv', 'order_id_wise_sales.csv', and 'top_selling_skus.png' have been created.")
